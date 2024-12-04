@@ -182,6 +182,7 @@ export const ComposePost = ({
   )
 
   const thread = composerState.thread
+
   const activePost = thread.posts[composerState.activePostIndex]
   const nextPost: PostDraft | undefined =
     thread.posts[composerState.activePostIndex + 1]
@@ -379,14 +380,14 @@ export const ComposePost = ({
 
     let postUri
     try {
-      postUri = (
-        await apilib.post(agent, queryClient, {
-          thread,
-          replyTo: replyTo?.uri,
-          onStateChange: setPublishingStage,
-          langs: toPostLanguages(langPrefs.postLanguage),
-        })
-      ).uris[0]
+      const postData = await apilib.post(agent, queryClient, {
+        thread,
+        replyTo: replyTo?.uri,
+        onStateChange: setPublishingStage,
+        langs: toPostLanguages(langPrefs.postLanguage),
+      })
+
+      postUri = postData.uris[0]
       try {
         await whenAppViewReady(agent, postUri, res => {
           const postedThread = res.data.thread
@@ -405,6 +406,14 @@ export const ComposePost = ({
       })
 
       let err = cleanError(e.message)
+
+      // This captures the error generated when the Itent Link uses an image URI that dont provide CORS.
+      if (e.tagName && e.tagName === 'CANVAS') {
+        err = _(
+          msg`We're sorry, but the image you're trying to post can't be uploaded to Bluesky. If you clicked a "Share on Bluesky" button, contact the site where this button is located.`,
+        )
+      }
+
       if (err.includes('not locate record')) {
         err = _(
           msg`We're sorry! The post you are replying to has been deleted.`,

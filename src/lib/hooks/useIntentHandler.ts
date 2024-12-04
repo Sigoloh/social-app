@@ -116,9 +116,17 @@ export function useComposeIntent() {
           // For some security, we're going to filter out any image uri that is external. We don't want someone to
           // be able to provide some link like "bluesky://intent/compose?imageUris=https://IHaveYourIpNow.com/image.jpeg
           // and we load that image
-          if (part.includes('https://') || part.includes('http://')) {
+
+          const isHttp = part.includes('https://') || part.includes('http://')
+          if (isHttp && isNative) {
             return false
           }
+
+          //Takes http or https out of the uri just to reuse the VALID_IMAGE_REGEX
+          if (!isNative && isHttp) {
+            part = part.replace(/http(s){0,1}:\/\//, '')
+          }
+
           // We also should just filter out cases that don't have all the info we need
           return VALID_IMAGE_REGEX.test(part)
         })
@@ -130,7 +138,7 @@ export function useComposeIntent() {
       setTimeout(() => {
         openComposer({
           text: text ?? undefined,
-          imageUris: isNative ? imageUris : undefined,
+          imageUris: imageUris,
         })
       }, 500)
     },

@@ -118,3 +118,6 @@ src/locale/locales/**/*.js
 
 # ogcard assets
 bskyogcard/src/assets/fonts/noto-*
+
+# Test page for this PR. A download link should be available in the PR
+share.html
